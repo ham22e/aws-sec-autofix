@@ -1,0 +1,32 @@
+# --- Terraform ---
+# 로컬 백엔드 상태 파일은 민감정보를 포함할 수 있으므로 커밋하지 않는다.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# 변수 값 파일(비밀·계정 종속 값)은 커밋하지 않는다. 단, 예시 파일은 추적한다.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# 프로바이더 lock 파일은 재현성을 위해 커밋을 유지한다(무시하지 않음).
+# .terraform.lock.hcl  <- 의도적으로 무시하지 않음
+
+# --- Python (Lambda) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# archive_file 이 생성하는 Lambda 배포 zip / 빌드 산출물
+build/
+*.zip
+
+# Lambda invoke 검증 시 생성되는 출력 파일(임시)
+out.json
+out-*.json
+
+# --- OS/에디터 ---
+.DS_Store

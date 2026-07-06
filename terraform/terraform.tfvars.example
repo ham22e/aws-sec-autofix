@@ -1,0 +1,30 @@
+# 이 파일은 사용 예시다. 복사해서 terraform.tfvars 로 만든 뒤 값을 채운다.
+#   cp terraform.tfvars.example terraform.tfvars
+# terraform.tfvars 는 .gitignore 처리되어 커밋되지 않는다(로컬 전용).
+
+# AWS CLI 자격증명 프로필 이름 (~/.aws/config, ~/.aws/credentials 에 정의된 값).
+# 지정하지 않으면 AWS_PROFILE 환경변수/기본 자격증명 체인을 따른다.
+aws_profile = "your-aws-profile"
+
+# (선택) 기본값을 바꾸고 싶을 때만 주석 해제.
+# aws_region   = "ap-northeast-2"
+# project_name = "autofix"
+
+# (선택) 이 스택이 AWS Config baseline(Recorder/Delivery Channel/역할/버킷)을
+# 직접 만들지 여부. 기본 true.
+# Configuration Recorder 는 계정+리전당 1개만 가능하므로, 이미 다른 곳에서
+# Config 를 운영 중이면 false 로 두고 Config 규칙만 기존 Recorder 위에 생성한다.
+# (참고: recorder 의 글로벌 리소스 기록 ON 은 모듈 코드 상수라 tfvars 대상이 아니다.)
+# manage_config_baseline = true
+
+# (선택) IAM 과도 권한 탐지 시 SNS 알림을 받을 이메일 주소.
+# 지정하지 않으면(=주석 유지) 이메일 구독을 만들지 않고 SNS 토픽만 생성한다.
+# 지정하면 배포 후 해당 주소로 온 "Subscription Confirmation" 메일에서
+# 구독을 확인해야 실제로 알림을 받는다.
+# alert_email = "you@example.com"
+
+# (선택) 로그 레이크 토글. 둘 다 기본 true.
+# 계정/조직에 이미 CloudTrail 트레일이 있으면 중복을 피하려 false.
+# enable_cloudtrail = true
+# 기본 VPC 가 없는 계정이면 false (기본 VPC 대상 Flow Logs 를 못 만든다).
+# enable_vpc_flow_logs = true

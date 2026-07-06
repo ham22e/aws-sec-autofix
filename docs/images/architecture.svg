@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1000" width="1200" height="1000" role="img" aria-label="AWS 보안 설정 자동 조치 파이프라인 아키텍처">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Segoe UI', Roboto, sans-serif; }
+      .t { font-weight: 700; }
+      .sub { font-weight: 400; }
+    </style>
+    <marker id="arrowSolid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#495057"/>
+    </marker>
+    <marker id="arrowDash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ADB5BD"/>
+    </marker>
+  </defs>
+
+  <!-- canvas -->
+  <rect x="16" y="16" width="1168" height="968" rx="28" ry="28" fill="#FFFFFF" stroke="#E9ECEF" stroke-width="2"/>
+
+  <!-- title -->
+  <text class="t" x="600" y="70" font-size="30" fill="#1A1A2E" text-anchor="middle">AWS 보안 설정 자동 조치 파이프라인</text>
+  <text class="sub" x="600" y="98" font-size="16" fill="#868E96" text-anchor="middle">탐지 · 자동 조치 · 운영</text>
+
+  <!-- main flow arrows (solid) -->
+  <line x1="420" y1="206" x2="420" y2="246" stroke="#495057" stroke-width="2" marker-end="url(#arrowSolid)"/>
+  <line x1="420" y1="330" x2="420" y2="370" stroke="#495057" stroke-width="2" marker-end="url(#arrowSolid)"/>
+  <line x1="420" y1="454" x2="420" y2="494" stroke="#495057" stroke-width="2" marker-end="url(#arrowSolid)"/>
+  <line x1="420" y1="578" x2="420" y2="618" stroke="#495057" stroke-width="2" marker-end="url(#arrowSolid)"/>
+  <line x1="420" y1="702" x2="420" y2="742" stroke="#495057" stroke-width="2" marker-end="url(#arrowSolid)"/>
+
+  <!-- side arrows -->
+  <line x1="590" y1="410" x2="713" y2="410" stroke="#495057" stroke-width="2" marker-end="url(#arrowSolid)"/>
+  <text class="sub" x="651" y="399" font-size="12" fill="#868E96" text-anchor="middle">알림 발행</text>
+  <line x1="590" y1="537" x2="713" y2="548" stroke="#ADB5BD" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrowDash)"/>
+  <text class="sub" x="650" y="526" font-size="12" fill="#868E96" text-anchor="middle">예외 경로</text>
+
+  <!-- N1 취약 리소스 -->
+  <rect x="250" y="124" width="340" height="82" rx="14" fill="#F1F3F5" stroke="#CED4DA" stroke-width="1.8"/>
+  <text class="t" x="420" y="158" font-size="18" fill="#495057" text-anchor="middle">의도적 취약 리소스</text>
+  <text class="sub" x="420" y="182" font-size="13" fill="#868E96" text-anchor="middle">S3 퍼블릭 · IAM 과다권한 · 미암호화</text>
+
+  <!-- N2 AWS Config (탐지) -->
+  <rect x="250" y="248" width="340" height="82" rx="14" fill="#D3F9D8" stroke="#40C057" stroke-width="1.8"/>
+  <text class="t" x="420" y="282" font-size="18" fill="#2B8A3E" text-anchor="middle">AWS Config</text>
+  <text class="sub" x="420" y="306" font-size="13" fill="#495057" text-anchor="middle">관리형 규칙으로 상시 평가 (탐지)</text>
+
+  <!-- N3 EventBridge -->
+  <rect x="250" y="372" width="340" height="82" rx="14" fill="#DBE4FF" stroke="#4C6EF5" stroke-width="1.8"/>
+  <text class="t" x="420" y="406" font-size="18" fill="#3B5BDB" text-anchor="middle">EventBridge</text>
+  <text class="sub" x="420" y="430" font-size="13" fill="#495057" text-anchor="middle">NON_COMPLIANT 이벤트 라우팅</text>
+
+  <!-- N4 Remediation Lambda (조치) -->
+  <rect x="250" y="496" width="340" height="82" rx="14" fill="#FFE8CC" stroke="#FD7E14" stroke-width="1.8"/>
+  <text class="t" x="420" y="530" font-size="18" fill="#E8590C" text-anchor="middle">Remediation Lambda</text>
+  <text class="sub" x="420" y="554" font-size="13" fill="#495057" text-anchor="middle">안전 상태로 자동 복구 · 멱등 · 비파괴 (조치)</text>
+
+  <!-- N5 CloudWatch Logs -->
+  <rect x="250" y="620" width="340" height="82" rx="14" fill="#D0EBFF" stroke="#339AF0" stroke-width="1.8"/>
+  <text class="t" x="420" y="654" font-size="18" fill="#1971C2" text-anchor="middle">CloudWatch Logs</text>
+  <text class="sub" x="420" y="678" font-size="13" fill="#495057" text-anchor="middle">구조화 JSON 조치 로그</text>
+
+  <!-- N6 로그레이크 / 대시보드 (운영) -->
+  <rect x="250" y="744" width="340" height="82" rx="14" fill="#FFF3BF" stroke="#FCC419" stroke-width="1.8"/>
+  <text class="t" x="420" y="778" font-size="18" fill="#E67700" text-anchor="middle">S3 로그레이크 · 대시보드</text>
+  <text class="sub" x="420" y="802" font-size="13" fill="#495057" text-anchor="middle">Athena 분석 · CloudWatch 대시보드 (운영)</text>
+
+  <!-- SNS 알림 (side, solid) -->
+  <rect x="720" y="372" width="300" height="76" rx="14" fill="#F1F3F5" stroke="#CED4DA" stroke-width="1.8"/>
+  <text class="t" x="870" y="404" font-size="17" fill="#495057" text-anchor="middle">SNS · 이메일 알림</text>
+  <text class="sub" x="870" y="426" font-size="13" fill="#868E96" text-anchor="middle">탐지 · 조치 통지</text>
+
+  <!-- 자동 조치 예외 (side, dashed) -->
+  <rect x="720" y="496" width="330" height="104" rx="14" fill="#FFFFFF" stroke="#ADB5BD" stroke-width="1.8" stroke-dasharray="6 5"/>
+  <text class="t" x="885" y="528" font-size="17" fill="#868E96" text-anchor="middle">자동 조치 예외</text>
+  <text class="sub" x="885" y="556" font-size="13" fill="#868E96" text-anchor="middle">IAM 과도권한 · 승인 기반 조치</text>
+  <text class="sub" x="885" y="580" font-size="13" fill="#868E96" text-anchor="middle">RDS 저장 암호화 · 수동 런북</text>
+
+  <!-- caption -->
+  <text class="sub" x="600" y="930" font-size="15" fill="#868E96" text-anchor="middle">자동 조치는 노출 차단·안전화만 수행(멱등·비파괴) · 위험 조치(IAM·RDS)는 승인 기반/수동 런북으로 분리</text>
+</svg>
