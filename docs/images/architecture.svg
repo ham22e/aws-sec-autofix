@@ -32,6 +32,8 @@
   <text class="sub" x="651" y="399" font-size="12" fill="#868E96" text-anchor="middle">알림 발행</text>
   <line x1="590" y1="537" x2="713" y2="548" stroke="#ADB5BD" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrowDash)"/>
   <text class="sub" x="650" y="526" font-size="12" fill="#868E96" text-anchor="middle">예외 경로</text>
+  <line x1="590" y1="661" x2="713" y2="661" stroke="#495057" stroke-width="2" marker-end="url(#arrowSolid)"/>
+  <text class="sub" x="651" y="650" font-size="12" fill="#868E96" text-anchor="middle">직접 조회</text>
 
   <!-- N1 취약 리소스 -->
   <rect x="250" y="124" width="340" height="82" rx="14" fill="#F1F3F5" stroke="#CED4DA" stroke-width="1.8"/>
@@ -73,6 +75,11 @@
   <text class="t" x="885" y="528" font-size="17" fill="#868E96" text-anchor="middle">자동 조치 예외</text>
   <text class="sub" x="885" y="556" font-size="13" fill="#868E96" text-anchor="middle">IAM 과도권한 · 승인 기반 조치</text>
   <text class="sub" x="885" y="580" font-size="13" fill="#868E96" text-anchor="middle">RDS 저장 암호화 · 수동 런북</text>
+
+  <!-- 웹 대시보드 (로컬, 운영) -->
+  <rect x="720" y="620" width="330" height="82" rx="14" fill="#FFF3BF" stroke="#FCC419" stroke-width="1.8"/>
+  <text class="t" x="885" y="654" font-size="17" fill="#E67700" text-anchor="middle">웹 대시보드 (로컬)</text>
+  <text class="sub" x="885" y="678" font-size="13" fill="#495057" text-anchor="middle">AWS Config · Logs 직접 조회 · 읽기 전용</text>
 
   <!-- caption -->
   <text class="sub" x="600" y="930" font-size="15" fill="#868E96" text-anchor="middle">자동 조치는 노출 차단·안전화만 수행(멱등·비파괴) · 위험 조치(IAM·RDS)는 승인 기반/수동 런북으로 분리</text>

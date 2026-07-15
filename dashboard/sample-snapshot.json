@@ -1,0 +1,134 @@
+{
+  "_comment": "--sample 모드 전용 고정 데이터. 완성된 API 응답이 아니라 '원본 재료'(terraform output + Config 상태 + 조치 로그 원본 JSON)를 담는다. serve.py 가 라이브와 똑같은 조립 코드를 태우므로 스키마가 어긋날 수 없다. log_events 의 timestamp 는 로드 시점에 '가장 최근 이벤트 = 3분 전'이 되도록 통째로 평행이동된다(기간 셀렉터가 동작하도록). 계정 ID 123456789012 는 AWS 문서용 예시 값이다.",
+
+  "region": "ap-northeast-2",
+
+  "outputs": {
+    "config_rule_name": "autofix-s3-bucket-public-read-prohibited",
+    "iam_config_rule_name": "autofix-iam-policy-no-admin-access",
+    "s3_kms_config_rule_name": "autofix-s3-default-encryption-kms",
+    "ebs_config_rule_name": "autofix-ec2-ebs-encryption-by-default",
+
+    "lambda_function_name": "autofix-s3-remediation",
+    "iam_detect_notify_lambda": "autofix-iam-detect-notify",
+    "iam_approve_remediate_lambda": "autofix-iam-approve-remediate",
+    "s3_kms_lambda_function_name": "autofix-s3-kms-encryption",
+    "ebs_lambda_function_name": "autofix-ebs-encryption-default",
+
+    "dashboard_url": "https://ap-northeast-2.console.aws.amazon.com/cloudwatch/home?region=ap-northeast-2#dashboards/dashboard/autofix-overview"
+  },
+
+  "compliance": {
+    "autofix-s3-bucket-public-read-prohibited": "NON_COMPLIANT",
+    "autofix-iam-policy-no-admin-access": "COMPLIANT",
+    "autofix-s3-default-encryption-kms": "COMPLIANT",
+    "autofix-ec2-ebs-encryption-by-default": "INSUFFICIENT_DATA"
+  },
+
+  "violating_resources": {
+    "autofix-s3-bucket-public-read-prohibited": ["autofix-vulnerable-3f9a2c11"]
+  },
+
+  "log_events": {
+    "/aws/lambda/autofix-s3-remediation": [
+      {
+        "event_type": "remediation",
+        "control": "s3-public-access",
+        "status": "error",
+        "bucket": "autofix-vulnerable-3f9a2c11",
+        "error_type": "ClientError",
+        "error": "An error occurred (AccessDenied) when calling the PutPublicAccessBlock operation",
+        "timestamp": "2026-07-13T05:58:00+00:00"
+      },
+      {
+        "event_type": "remediation",
+        "control": "s3-public-access",
+        "status": "applied",
+        "bucket": "autofix-vulnerable-3f9a2c11",
+        "compliance_before": "NON_COMPLIANT",
+        "applied": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "timestamp": "2026-07-13T05:40:00+00:00"
+      },
+      {
+        "event_type": "remediation",
+        "control": "s3-public-access",
+        "status": "skipped",
+        "reason": "no_bucket_in_event",
+        "timestamp": "2026-07-08T18:02:00+00:00"
+      }
+    ],
+
+    "/aws/lambda/autofix-iam-detect-notify": [
+      {
+        "event_type": "remediation",
+        "control": "iam-excessive-privilege",
+        "status": "notified",
+        "policy_id": "ANPAEXAMPLE7QK2M4XZ",
+        "compliance": "NON_COMPLIANT",
+        "attached_entities": {
+          "roles": ["autofix-dummy-admin-role"],
+          "users": [],
+          "groups": []
+        },
+        "topic": "arn:aws:sns:ap-northeast-2:123456789012:autofix-iam-alerts",
+        "timestamp": "2026-07-12T22:30:00+00:00"
+      }
+    ],
+
+    "/aws/lambda/autofix-iam-approve-remediate": [
+      {
+        "event_type": "remediation",
+        "control": "iam-excessive-privilege",
+        "status": "applied",
+        "policy_arn": "arn:aws:iam::123456789012:policy/autofix-vulnerable-admin-policy",
+        "previous_default_version": "v1",
+        "new_default_version": "v2",
+        "deleted_version": null,
+        "replacement_statement_count": 1,
+        "timestamp": "2026-07-12T23:05:00+00:00"
+      },
+      {
+        "event_type": "remediation",
+        "control": "iam-excessive-privilege",
+        "status": "rejected_no_confirmation",
+        "policy_arn": "arn:aws:iam::123456789012:policy/autofix-vulnerable-admin-policy",
+        "timestamp": "2026-07-12T22:50:00+00:00"
+      }
+    ],
+
+    "/aws/lambda/autofix-s3-kms-encryption": [
+      {
+        "event_type": "remediation",
+        "control": "s3-kms-encryption",
+        "status": "applied",
+        "bucket": "autofix-kms-vulnerable-8b1d47",
+        "kms_key": "arn:aws:kms:ap-northeast-2:123456789012:key/2c4f1a9e-5d73-4b81-9f0a-6e2c8d41b7a3",
+        "previous_kms_key": null,
+        "timestamp": "2026-07-13T02:10:00+00:00"
+      },
+      {
+        "event_type": "remediation",
+        "control": "s3-kms-encryption",
+        "status": "already_compliant",
+        "bucket": "autofix-kms-vulnerable-8b1d47",
+        "kms_key": "arn:aws:kms:ap-northeast-2:123456789012:key/2c4f1a9e-5d73-4b81-9f0a-6e2c8d41b7a3",
+        "timestamp": "2026-07-09T09:15:00+00:00"
+      }
+    ],
+
+    "/aws/lambda/autofix-ebs-encryption-default": [
+      {
+        "event_type": "remediation",
+        "control": "ebs-encryption-default",
+        "status": "applied",
+        "ebs_encryption_by_default": true,
+        "timestamp": "2026-07-11T14:20:00+00:00"
+      }
+    ]
+  }
+}

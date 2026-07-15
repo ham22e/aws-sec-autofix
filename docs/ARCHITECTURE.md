@@ -59,6 +59,14 @@ CloudWatch 대시보드로 모아 "언제 무엇이 탐지·조치됐는지"를 
 로그 레이크가 감사·장기 분석(Athena)을 담당한다면, 이 계층은 운영 현황
 실시간 뷰다. 별도 이력 저장소(DynamoDB) 없이 로그 그룹·Config 를 직접 소스로 쓴다.
 
+### 웹 대시보드 (로컬 실행)
+같은 운영 현황을 **다른 소스로** 보는 병행 뷰(`dashboard/`). CloudWatch 대시보드가
+metric filter 로 만든 커스텀 메트릭을 본다면, 이 대시보드는 AWS Config 와 CloudWatch
+Logs 를 **직접 조회**한다. 덕분에 메트릭 차원(control·status)에는 담기지 않는 정보(지금
+위반 중인 리소스 ID, 적용된 KMS 키, 변경된 정책 버전)까지 시나리오별로 보여준다.
+로컬(127.0.0.1)에서 실행되고 읽기 전용 API 3종만 호출하므로 AWS 리소스를 새로 만들지
+않는다(비용 0원, `terraform destroy` 무관). 실행법은 `dashboard/README.md` 참고.
+
 ---
 
 ## 4. 데이터 흐름 (한 사이클)
