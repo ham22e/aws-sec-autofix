@@ -56,13 +56,24 @@ resource "aws_s3_bucket_policy" "public_read" {
 }
 
 # --- 탐지: AWS Config 관리형 규칙 --------------------------------------
+# ⚠️ 이 규칙은 조치 배선(EventBridge 타깃 + Lambda 권한)이 완성된 뒤에 만들어야 한다.
+# Config 는 규칙이 생성되는 즉시 첫 평가를 돌리는데, 그 순간 타깃이 안 붙어 있으면
+# NON_COMPLIANT 전환 이벤트가 그대로 사라진다(이벤트는 재생되지 않는다. 규칙이 이미
+# NON_COMPLIANT 에 "머물러" 있어 새 전환이 생기지 않기 때문).
+# 그래서 event_pattern 은 이 리소스를 참조하지 않고 var.config_rule_name 문자열을 쓴다.
+# 리소스를 참조하면 Terraform 이 규칙을 먼저 만들어 경쟁 상태가 구조적으로 생긴다.
 resource "aws_config_config_rule" "s3_public_read" {
-  name = "${var.name_prefix}-s3-bucket-public-read-prohibited"
+  name = var.config_rule_name
 
   source {
     owner             = "AWS"
     source_identifier = "S3_BUCKET_PUBLIC_READ_PROHIBITED"
   }
+
+  depends_on = [
+    aws_cloudwatch_event_target.lambda,
+    aws_lambda_permission.eventbridge,
+  ]
 }
 
 # --- 조치 Lambda -------------------------------------------------------
@@ -87,11 +98,6 @@ resource "aws_iam_role" "lambda" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
-resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.name_prefix}-s3-remediation"
-  retention_in_days = 14
-}
-
 # 최소 권한: 조치는 이 취약 버킷에만, 로그는 이 로그 그룹에만.
 data "aws_iam_policy_document" "lambda" {
   statement {
@@ -111,7 +117,7 @@ data "aws_iam_policy_document" "lambda" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = ["${aws_cloudwatch_log_group.lambda.arn}:*"]
+    resources = ["${var.log_group_arn}:*"]
   }
 }
 
@@ -132,7 +138,6 @@ resource "aws_lambda_function" "remediation" {
 
   depends_on = [
     aws_iam_role_policy.lambda,
-    aws_cloudwatch_log_group.lambda,
   ]
 }
 
@@ -145,7 +150,7 @@ resource "aws_cloudwatch_event_rule" "noncompliant" {
     source      = ["aws.config"]
     detail-type = ["Config Rules Compliance Change"]
     detail = {
-      configRuleName = [aws_config_config_rule.s3_public_read.name]
+      configRuleName = [var.config_rule_name]
       newEvaluationResult = {
         complianceType = ["NON_COMPLIANT"]
       }

@@ -73,13 +73,25 @@ resource "aws_iam_role_policy_attachment" "dummy_admin" {
 # --- 탐지: AWS Config 관리형 규칙 --------------------------------------
 # 고객관리형 정책의 기본 버전에 Effect:Allow + Action:* + Resource:* 문이
 # 있으면 NON_COMPLIANT. 계정의 모든 고객관리형 정책을 평가한다.
+#
+# ⚠️ 이 규칙은 알림 배선(EventBridge 타깃 + Lambda 권한)이 완성된 뒤에 만들어야 한다.
+# Config 는 규칙이 생성되는 즉시 첫 평가를 돌리는데, 그 순간 타깃이 안 붙어 있으면
+# NON_COMPLIANT 전환 이벤트가 그대로 사라진다(이벤트는 재생되지 않는다. 규칙이 이미
+# NON_COMPLIANT 에 "머물러" 있어 새 전환이 생기지 않기 때문).
+# 그래서 event_pattern 은 이 리소스를 참조하지 않고 var.config_rule_name 문자열을 쓴다.
+# 리소스를 참조하면 Terraform 이 규칙을 먼저 만들어 경쟁 상태가 구조적으로 생긴다.
 resource "aws_config_config_rule" "iam_admin" {
-  name = "${var.name_prefix}-iam-policy-no-admin-access"
+  name = var.config_rule_name
 
   source {
     owner             = "AWS"
     source_identifier = "IAM_POLICY_NO_STATEMENTS_WITH_ADMIN_ACCESS"
   }
+
+  depends_on = [
+    aws_cloudwatch_event_target.detect_notify,
+    aws_lambda_permission.eventbridge,
+  ]
 }
 
 # --- 알림 채널: SNS ----------------------------------------------------
@@ -124,11 +136,6 @@ resource "aws_iam_role" "detect_notify" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
-resource "aws_cloudwatch_log_group" "detect_notify" {
-  name              = "/aws/lambda/${var.name_prefix}-iam-detect-notify"
-  retention_in_days = 14
-}
-
 # 최소 권한: SNS 발행 + (알림 enrich 용) 테스트 정책 읽기 + 로그.
 # 정책을 변경하는 권한은 부여하지 않는다 = 탐지·통지자.
 data "aws_iam_policy_document" "detect_notify" {
@@ -156,7 +163,7 @@ data "aws_iam_policy_document" "detect_notify" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = ["${aws_cloudwatch_log_group.detect_notify.arn}:*"]
+    resources = ["${var.detect_log_group_arn}:*"]
   }
 }
 
@@ -188,7 +195,6 @@ resource "aws_lambda_function" "detect_notify" {
 
   depends_on = [
     aws_iam_role_policy.detect_notify,
-    aws_cloudwatch_log_group.detect_notify,
   ]
 }
 
@@ -201,7 +207,7 @@ resource "aws_cloudwatch_event_rule" "iam_noncompliant" {
     source      = ["aws.config"]
     detail-type = ["Config Rules Compliance Change"]
     detail = {
-      configRuleName = [aws_config_config_rule.iam_admin.name]
+      configRuleName = [var.config_rule_name]
       newEvaluationResult = {
         complianceType = ["NON_COMPLIANT"]
       }
@@ -239,11 +245,6 @@ resource "aws_iam_role" "approve_remediate" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
-resource "aws_cloudwatch_log_group" "approve_remediate" {
-  name              = "/aws/lambda/${var.name_prefix}-iam-approve-remediate"
-  retention_in_days = 14
-}
-
 # 최소 권한: 정책 버전 조작을 "테스트 정책 ARN 에만" 허용한다. 알림이 다른 정책을
 # 가리켜도 자동 라이트사이징 대상은 이 정책으로 한정된다(blast radius 축소).
 data "aws_iam_policy_document" "approve_remediate" {
@@ -267,7 +268,7 @@ data "aws_iam_policy_document" "approve_remediate" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = ["${aws_cloudwatch_log_group.approve_remediate.arn}:*"]
+    resources = ["${var.approve_log_group_arn}:*"]
   }
 }
 
@@ -296,6 +297,5 @@ resource "aws_lambda_function" "approve_remediate" {
 
   depends_on = [
     aws_iam_role_policy.approve_remediate,
-    aws_cloudwatch_log_group.approve_remediate,
   ]
 }

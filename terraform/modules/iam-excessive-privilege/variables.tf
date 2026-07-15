@@ -18,3 +18,28 @@ variable "alert_email" {
   type        = string
   default     = null
 }
+
+variable "config_rule_name" {
+  description = "이 시나리오의 AWS Config 규칙 이름. 루트가 소유해 EventBridge 패턴과 규칙에 함께 넘긴다."
+  type        = string
+}
+
+variable "detect_log_group_name" {
+  description = "탐지·알림 Lambda 의 로그 그룹 이름. 루트가 먼저 만들어 넘긴다."
+  type        = string
+}
+
+variable "detect_log_group_arn" {
+  description = "탐지·알림 Lambda 의 로그 그룹 ARN. 역할의 로그 쓰기 권한을 이 그룹으로만 좁힌다."
+  type        = string
+}
+
+variable "approve_log_group_name" {
+  description = "승인 조치 Lambda 의 로그 그룹 이름. 루트가 먼저 만들어 넘긴다."
+  type        = string
+}
+
+variable "approve_log_group_arn" {
+  description = "승인 조치 Lambda 의 로그 그룹 ARN. 역할의 로그 쓰기 권한을 이 그룹으로만 좁힌다."
+  type        = string
+}

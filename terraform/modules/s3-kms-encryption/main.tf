@@ -114,8 +114,16 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "vulnerable" {
 # blast radius 를 테스트 버킷 하나로 한정하기 위해 이 버킷으로 scope 를 좁힌다.
 # (좁히지 않으면 Config 전달 버킷·S3 시나리오 버킷 등도 KMS 아님으로 NON_COMPLIANT 가
 #  되어 조치 Lambda 가 그것들까지 건드리게 된다.)
+#
+# ⚠️ 이 규칙은 조치 배선(EventBridge 타깃 + Lambda 권한)이 완성된 뒤에 만들어야 한다.
+# Config 는 규칙이 생성되는 즉시 첫 평가를 돌리는데, 그 순간 타깃이 안 붙어 있으면
+# NON_COMPLIANT 전환 이벤트가 그대로 사라진다(이벤트는 재생되지 않는다. 규칙이 이미
+# NON_COMPLIANT 에 "머물러" 있어 새 전환이 생기지 않기 때문).
+# 그래서 event_pattern 은 이 리소스를 참조하지 않고 var.config_rule_name 문자열을 쓴다.
+# 리소스를 참조하면 Terraform 이 규칙을 먼저 만들어 경쟁 상태가 구조적으로 생긴다.
+# (실제로 이 모듈이 이 경쟁에서 져서 조치 Lambda 가 한 번도 호출되지 않은 적이 있다.)
 resource "aws_config_config_rule" "s3_kms" {
-  name = "${var.name_prefix}-s3-default-encryption-kms"
+  name = var.config_rule_name
 
   source {
     owner             = "AWS"
@@ -126,6 +134,11 @@ resource "aws_config_config_rule" "s3_kms" {
     compliance_resource_types = ["AWS::S3::Bucket"]
     compliance_resource_id    = aws_s3_bucket.vulnerable.id
   }
+
+  depends_on = [
+    aws_cloudwatch_event_target.lambda,
+    aws_lambda_permission.eventbridge,
+  ]
 }
 
 # --- 조치 Lambda -------------------------------------------------------
@@ -152,11 +165,6 @@ resource "aws_iam_role" "lambda" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
-resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.name_prefix}-s3-kms-encryption"
-  retention_in_days = 14
-}
-
 # 최소 권한: 조치는 이 취약 버킷에만, 로그는 이 로그 그룹에만.
 # put-bucket-encryption 은 호출자에게 KMS 권한을 요구하지 않는다(키 사용 인가는 키 정책의
 # AllowS3UseOfKey 로 처리). 따라서 이 역할에는 kms 권한을 주지 않는다.
@@ -178,7 +186,7 @@ data "aws_iam_policy_document" "lambda" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = ["${aws_cloudwatch_log_group.lambda.arn}:*"]
+    resources = ["${var.log_group_arn}:*"]
   }
 }
 
@@ -207,7 +215,6 @@ resource "aws_lambda_function" "remediation" {
 
   depends_on = [
     aws_iam_role_policy.lambda,
-    aws_cloudwatch_log_group.lambda,
   ]
 }
 
@@ -220,7 +227,7 @@ resource "aws_cloudwatch_event_rule" "noncompliant" {
     source      = ["aws.config"]
     detail-type = ["Config Rules Compliance Change"]
     detail = {
-      configRuleName = [aws_config_config_rule.s3_kms.name]
+      configRuleName = [var.config_rule_name]
       newEvaluationResult = {
         complianceType = ["NON_COMPLIANT"]
       }

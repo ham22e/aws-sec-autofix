@@ -50,8 +50,13 @@ resource "aws_ebs_volume" "vulnerable" {
 }
 
 # --- 탐지: AWS Config 관리형 규칙 (주기) ------------------------------
+# ⚠️ 이 규칙은 조치 배선(EventBridge 타깃 + Lambda 권한)이 완성된 뒤에 만들어야 한다.
+# 주기 규칙이라도 생성 직후 한 번은 즉시 평가한다. 그 순간 타깃이 안 붙어 있으면
+# NON_COMPLIANT 전환 이벤트가 그대로 사라진다(재생되지 않는다).
+# 그래서 event_pattern 은 이 리소스를 참조하지 않고 var.config_rule_name 문자열을 쓴다.
+# 리소스를 참조하면 Terraform 이 규칙을 먼저 만들어 경쟁 상태가 구조적으로 생긴다.
 resource "aws_config_config_rule" "ebs_default" {
-  name = "${var.name_prefix}-ec2-ebs-encryption-by-default"
+  name = var.config_rule_name
 
   source {
     owner             = "AWS"
@@ -60,6 +65,11 @@ resource "aws_config_config_rule" "ebs_default" {
 
   # 주기 규칙의 자동 재평가 주기(테스트는 강제 평가로 즉시화하므로 최저 비용값 사용).
   maximum_execution_frequency = "TwentyFour_Hours"
+
+  depends_on = [
+    aws_cloudwatch_event_target.lambda,
+    aws_lambda_permission.eventbridge,
+  ]
 }
 
 # --- 조치 Lambda -------------------------------------------------------
@@ -85,11 +95,6 @@ resource "aws_iam_role" "lambda" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
-resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.name_prefix}-ebs-encryption-default"
-  retention_in_days = 14
-}
-
 # 최소 권한: EBS 기본 암호화 조회/활성화 + 로그.
 # EnableEbsEncryptionByDefault·GetEbsEncryptionByDefault 는 계정+리전 단위 API 라
 # 리소스 레벨 스코프를 지원하지 않는다 → resource="*" 불가피(계정 설정 조작만 가능).
@@ -111,7 +116,7 @@ data "aws_iam_policy_document" "lambda" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = ["${aws_cloudwatch_log_group.lambda.arn}:*"]
+    resources = ["${var.log_group_arn}:*"]
   }
 }
 
@@ -132,7 +137,6 @@ resource "aws_lambda_function" "remediation" {
 
   depends_on = [
     aws_iam_role_policy.lambda,
-    aws_cloudwatch_log_group.lambda,
   ]
 }
 
@@ -145,7 +149,7 @@ resource "aws_cloudwatch_event_rule" "noncompliant" {
     source      = ["aws.config"]
     detail-type = ["Config Rules Compliance Change"]
     detail = {
-      configRuleName = [aws_config_config_rule.ebs_default.name]
+      configRuleName = [var.config_rule_name]
       newEvaluationResult = {
         complianceType = ["NON_COMPLIANT"]
       }
